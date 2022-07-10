@@ -71,6 +71,24 @@ Response:
 }
 ```
 
+##### Получение задачи
+
+URl: `http://localhost:5000/todo/api/v1.0/tasks/<int:task_id>`
+
+Method: `GET`
+
+Response:
+
+```
+{
+    "task": Task
+}
+```
+
+Errors:
+
+`404` Задача не найдена
+
 ##### Добавление новой задачи
 
 URL: `http://localhost:5000/todo/api/v1.0/tasks`
@@ -97,3 +115,51 @@ Response:
 Errors:
 
 `400` - Невалидные данные
+
+##### Изменение задачи
+
+URl: `http://localhost:5000/todo/api/v1.0/tasks/<int:task_id>`
+
+Method: `PUT`
+
+Data:
+
+```
+{
+  "title": str,           // новое название задачи, не пустая строка не обязательное поле
+  "description": str,     // новое описание задачи, не обязательное поле
+  "done": bool            // изменённый маркер выполнения задачи
+}
+```
+
+Response:
+
+```
+{
+    "task": Task  // изменённая задача
+}
+```
+
+Errors:
+
+`404` Задача не найдена
+
+`400` Невалидные данные
+
+##### Удаление задачи
+
+URl: `http://localhost:5000/todo/api/v1.0/tasks/<int:task_id>`
+
+Method: `DELETE`
+
+Response:
+
+```
+{
+    "result": true
+}
+```
+
+Errors:
+
+`404` Задача не найдена
