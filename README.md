@@ -46,7 +46,7 @@ chmod a+x app.py
 
 ##### Task
 
-```json
+```
 {
   "uri": str,           // абсолютная ссылка на получение задачи
   "title": str,         // название задачи
@@ -56,6 +56,7 @@ chmod a+x app.py
 ```
 
 #### Ресурсы
+
 ##### Все задачи
 
 URL: `http://localhost:5000/todo/api/v1.0/tasks`
@@ -64,7 +65,7 @@ Method: `GET`
 
 Response:
 
-```json
+```
 {
   "tasks": [Task]
 }
@@ -78,7 +79,7 @@ Method: `POST`
 
 Data:
 
-```json
+```
 {
   "title": str,         // название задачи, обязательно, не пустая строка
   "description": str    // описание задачи, необязательно
@@ -87,7 +88,7 @@ Data:
 
 Response:
 
-```json
+```
 {
   "task": Task  // добавленная задача
 }
