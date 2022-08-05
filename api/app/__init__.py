@@ -1,43 +1,19 @@
-#!flask/bin/python
-from flask import Flask, jsonify, abort, make_response, request, url_for
+from flask import Flask, jsonify, abort, make_response, request
 from flask_httpauth import HTTPBasicAuth
 
-
-def make_public_task(task):
-    new_task = {}
-    for field in task:
-        if field == 'id':
-            new_task['uri'] = url_for('get_task', task_id=task['id'], _external=True)
-        else:
-            new_task[field] = task[field]
-    return new_task
+from api.task.db import tasks
+from api.task.services import make_public_task
 
 
 app = Flask(__name__)
-
-
-tasks = [
-    {
-        'id': 1,
-        'title': 'Buy groceries',
-        'description': 'Milk, Cheese, Pizza, Fruit, Tylenol',
-        'done': False
-    },
-    {
-        'id': 2,
-        'title': 'Learn Python',
-        'description': 'Need to find a good Python tutorial on the web',
-        'done': False
-    }
-]
 
 auth = HTTPBasicAuth()
 
 
 @auth.get_password
 def get_password(username):
-    if username == 'miguel':
-        return 'python'
+    if username == 'admin':
+        return 'password'
     return None
 
 
@@ -122,7 +98,3 @@ def delete_task(task_id):
         abort(404)
     tasks.remove(task[0])
     return jsonify({'result': True})
-
-
-if __name__ == '__main__':
-    app.run(debug=True)
