@@ -1,4 +1,4 @@
-tasks = [
+all_tasks = [
     {
         'id': 1,
         'title': 'Buy groceries',
