@@ -3,7 +3,6 @@ from flask_httpauth import HTTPBasicAuth
 
 from api.tag.services import find_tag_by_id, get_all_tags
 from api.tag.services import create_id_for_tag, add_tag, remove_tag
-from api.tag.services import url_for_all_tags, url_for_tag
 
 from api.task.services import find_task_by_id, get_all_tasks
 from api.task.services import create_id_for_task, add_task, remove_task
@@ -11,6 +10,8 @@ from api.task.services import url_for_all_tasks, url_for_task
 
 from api.core.services import validate_len, validate_for_str
 from api.core.services import validate_for_request
+
+from api.task_with_tag.services import tags_for_tasks
 
 
 app = Flask(__name__)
@@ -44,8 +45,10 @@ def bad_request(error):
 @auth.login_required
 def get_tasks():
     tasks = get_all_tasks()
-    url_for_all_tasks(tasks)
-    return jsonify({'all_tasks': tasks})
+    with_tags = request.args.get('with-tags')
+    if with_tags or with_tags == '':
+        tasks = tags_for_tasks()
+    return jsonify({'all_tasks': url_for_all_tasks(tasks)})
 
 
 @app.route('/todo/api/v1.0/tasks/<int:task_id>', methods=['GET'])
@@ -54,8 +57,7 @@ def get_task(task_id):
     task = find_task_by_id(task_id)
     validate_len(task)
     task = task[0]
-    url_for_task(task)
-    return jsonify(task)
+    return jsonify(url_for_task(task))
 
 
 @app.route('/todo/api/v1.0/tasks', methods=['POST'])
@@ -77,8 +79,7 @@ def create_task():
         'done': False
     }
     add_task(task)
-    url_for_task(task)
-    return jsonify(task)
+    return jsonify(url_for_task(task))
 
 
 @app.route('/todo/api/v1.0/tasks/<int:task_id>', methods=['PUT'])
@@ -102,8 +103,7 @@ def change_task(task_id):
     task['title'] = request.json.get('title', task['title'])
     task['description'] = request.json.get('description', task['description'])
     task['done'] = request.json.get('done', task['done'])
-    url_for_task(task)
-    return jsonify(task)
+    return jsonify(url_for_task(task))
 
 
 @app.route('/todo/api/v1.0/tasks/<int:task_id>', methods=['DELETE'])
@@ -120,7 +120,6 @@ def delete_task(task_id):
 @auth.login_required
 def get_tags():
     tags = get_all_tags()
-    url_for_all_tags(tags)
     return jsonify({'all_tags': tags})
 
 
@@ -130,7 +129,6 @@ def get_tag(tag_id):
     tag = find_tag_by_id(tag_id)
     validate_len(tag)
     tag = tag[0]
-    url_for_tag(tag)
     return jsonify(tag)
 
 @app.route('/todo/api/v1.0/tags', methods=['POST'])
@@ -151,7 +149,6 @@ def create_tag():
         'color': request.json['color']
     }
     add_tag(tag)
-    url_for_tag(tag)
     return jsonify(tag)
 
 
@@ -171,7 +168,6 @@ def change_tag(tag_id):
             abort(400)
     tag['title'] = request.json.get('title', tag['title'])
     tag['color'] = request.json.get('color', tag['color'])
-    url_for_tag(tag)
     return jsonify(tag)
 
 
