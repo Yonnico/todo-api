@@ -1,17 +1,14 @@
 from flask import Flask, jsonify, abort, make_response, request
 from flask_httpauth import HTTPBasicAuth
 
-from api.tag.services import find_tag_by_id, get_all_tags
-from api.tag.services import create_id_for_tag, add_tag, remove_tag
+from api.tag.services import get_tag_by_id, get_all_tags
+from api.tag.services import remove_tag, validate_and_add_tag
+from api.tag.services import validate_and_change_tag
 
-from api.task.services import find_task_by_id, get_all_tasks
-from api.task.services import create_id_for_task, add_task, remove_task
+from api.task.services import get_task_by_id, get_all_tasks
+from api.task.services import remove_task, validate_and_add_task
 from api.task.services import url_for_all_tasks, url_for_task
-
-from api.core.services import validate_len, validate_for_str
-from api.core.services import validate_for_request
-
-from api.task_with_tag.services import tags_for_tasks
+from api.task.services import validate_and_change_task
 
 
 app = Flask(__name__)
@@ -47,71 +44,57 @@ def get_tasks():
     tasks = get_all_tasks()
     with_tags = request.args.get('with-tags')
     if with_tags or with_tags == '':
-        tasks = tags_for_tasks()
+        pass
     return jsonify({'all_tasks': url_for_all_tasks(tasks)})
 
 
 @app.route('/todo/api/v1.0/tasks/<int:task_id>', methods=['GET'])
 @auth.login_required
 def get_task(task_id):
-    task = find_task_by_id(task_id)
-    validate_len(task)
-    task = task[0]
+    task = get_task_by_id(task_id)
+    if not task:
+        abort(404)
     return jsonify(url_for_task(task))
 
 
 @app.route('/todo/api/v1.0/tasks', methods=['POST'])
 @auth.login_required
-def create_task():
-    if not request.json:
+def add_task():
+    response = validate_and_add_task(
+        request.json['title'],
+        request.json.get('description', None)
+    )
+    if response['status'] == 0:
+        abort(404)
+    if response['status'] == 1:
         abort(400)
-    validate_for_request('title')
-    if not validate_for_str(request.json['title']):
-        abort(400)
-    if 'description' in request.json :
-        if not validate_for_str(request.json['description']):
-            abort(400)
-    id = create_id_for_task()
-    task = {
-        'id': id,
-        'title': request.json['title'],
-        'description': request.json.get('description', ''),
-        'done': False
-    }
-    add_task(task)
-    return jsonify(url_for_task(task))
+    result = response['value']
+    return jsonify(url_for_task(result))
 
 
 @app.route('/todo/api/v1.0/tasks/<int:task_id>', methods=['PUT'])
 @auth.login_required
 def change_task(task_id):
-    task = find_task_by_id(task_id)
-    validate_len(task)
-    task = task[0]
-    if not request.json:
+    response = validate_and_change_task(
+        task_id,
+        request.json.get('title', None),
+        request.json.get('description', None),
+        request.json.get('done', None)
+    )
+    if response['status'] == 0:
+        abort(404)
+    if response['status'] == 1:
         abort(400)
-    if 'title' in request.json:
-        if not validate_for_str(request.json['title']):
-            abort(400)
-    if 'description' in request.json:
-        if not isinstance(request.json['description'], str):
-            abort(400)
-    if 'done' in request.json:
-        if not isinstance(request.json['done'], bool):
-            abort(400)
-
-    task['title'] = request.json.get('title', task['title'])
-    task['description'] = request.json.get('description', task['description'])
-    task['done'] = request.json.get('done', task['done'])
-    return jsonify(url_for_task(task))
+    result = response['value']
+    return jsonify(url_for_task(result))
 
 
 @app.route('/todo/api/v1.0/tasks/<int:task_id>', methods=['DELETE'])
 @auth.login_required
 def delete_task(task_id):
-    task = find_task_by_id(task_id)
-    validate_len(task)
-    task = task[0]
+    task = get_task_by_id(task_id)
+    if not task:
+        abort(404)
     remove_task(task)
     return jsonify({'result': True})
 
@@ -126,56 +109,40 @@ def get_tags():
 @app.route('/todo/api/v1.0/tags/<int:tag_id>', methods=['GET'])
 @auth.login_required
 def get_tag(tag_id):
-    tag = find_tag_by_id(tag_id)
-    validate_len(tag)
-    tag = tag[0]
+    tag = get_tag_by_id(tag_id)
+    if not tag:
+        abort(404)
     return jsonify(tag)
 
 @app.route('/todo/api/v1.0/tags', methods=['POST'])
 @auth.login_required
-def create_tag():
-    if not request.json:
+def add_tag():
+    tag = validate_and_add_tag(request.json['title'], request.json['color'])
+    if not tag:
         abort(400)
-    validate_for_request('title')
-    validate_for_request('color')
-    if not validate_for_str(request.json['title']):
-        abort(400)
-    if not validate_for_str(request.json['color']):
-        abort(400)
-    id = create_id_for_tag()
-    tag = {
-        'id': id,
-        'title': request.json['title'],
-        'color': request.json['color']
-    }
-    add_tag(tag)
     return jsonify(tag)
 
 
 @app.route('/todo/api/v1.0/tags/<int:tag_id>', methods=['PUT'])
 @auth.login_required
 def change_tag(tag_id):
-    tag = find_tag_by_id(tag_id)
-    validate_len(tag)
-    tag = tag[0]
-    if not request.json:
+    response = validate_and_change_tag(
+        tag_id,
+        request.json.get('title', None),
+        request.json.get('color', None)
+    )
+    if response['status'] == 0:
+        abort(404)
+    if response['status'] == 1:
         abort(400)
-    if 'title' in request.json:
-        if not validate_for_str(request.json['title']):
-            abort(400)
-    if 'color' in request.json:
-        if not validate_for_str(request.json['color']):
-            abort(400)
-    tag['title'] = request.json.get('title', tag['title'])
-    tag['color'] = request.json.get('color', tag['color'])
-    return jsonify(tag)
+    return jsonify(response['value'])
 
 
 @app.route('/todo/api/v1.0/tags/<int:tag_id>', methods=['DELETE'])
 @auth.login_required
 def delete_tag(tag_id):
-    tag = find_tag_by_id(tag_id)
-    validate_len(tag)
-    tag = tag[0]
+    tag = get_tag_by_id(tag_id)
+    if not tag:
+        abort(404)
     remove_tag(tag)
     return jsonify({'result': True})
