@@ -10,6 +10,7 @@ from api.task.services import remove_task, validate_and_add_task
 from api.task.services import url_for_all_tasks, url_for_task
 from api.task.services import validate_and_change_task
 
+from api.task_with_tag.services import tags_for_task, tags_for_tasks
 
 app = Flask(__name__)
 
@@ -44,7 +45,7 @@ def get_tasks():
     tasks = get_all_tasks()
     with_tags = request.args.get('with-tags')
     if with_tags or with_tags == '':
-        pass
+        tasks = tags_for_tasks(tasks)
     return jsonify({'all_tasks': url_for_all_tasks(tasks)})
 
 
@@ -54,6 +55,9 @@ def get_task(task_id):
     task = get_task_by_id(task_id)
     if not task:
         abort(404)
+    with_tags = request.args.get('with-tags')
+    if with_tags or with_tags == '':
+        task = tags_for_task(task)
     return jsonify(url_for_task(task))
 
 
