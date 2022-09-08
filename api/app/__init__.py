@@ -4,6 +4,7 @@ from flask_httpauth import HTTPBasicAuth
 from api.tag.services import get_tag_by_id, get_all_tags
 from api.tag.services import remove_tag, validate_and_add_tag
 from api.tag.services import validate_and_change_tag
+from api.tag.services import url_for_tag, url_for_all_tags
 
 from api.task.services import get_task_by_id, get_all_tasks
 from api.task.services import remove_task, validate_and_add_task
@@ -107,7 +108,7 @@ def delete_task(task_id):
 @auth.login_required
 def get_tags():
     tags = get_all_tags()
-    return jsonify({'all_tags': tags})
+    return jsonify({'all_tags': url_for_all_tags(tags)})
 
 
 @app.route('/todo/api/v1.0/tags/<int:tag_id>', methods=['GET'])
@@ -116,7 +117,7 @@ def get_tag(tag_id):
     tag = get_tag_by_id(tag_id)
     if not tag:
         abort(404)
-    return jsonify(tag)
+    return jsonify(url_for_tag(tag))
 
 @app.route('/todo/api/v1.0/tags', methods=['POST'])
 @auth.login_required
@@ -124,7 +125,7 @@ def add_tag():
     tag = validate_and_add_tag(request.json['title'], request.json['color'])
     if not tag:
         abort(400)
-    return jsonify(tag)
+    return jsonify(url_for_tag(tag))
 
 
 @app.route('/todo/api/v1.0/tags/<int:tag_id>', methods=['PUT'])
@@ -139,7 +140,8 @@ def change_tag(tag_id):
         abort(404)
     if response['status'] == 1:
         abort(400)
-    return jsonify(response['value'])
+    result = response['value']
+    return jsonify(url_for_tag(result))
 
 
 @app.route('/todo/api/v1.0/tags/<int:tag_id>', methods=['DELETE'])

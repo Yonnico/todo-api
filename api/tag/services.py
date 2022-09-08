@@ -1,4 +1,4 @@
-from flask import request
+from flask import url_for, request
 
 from api.tag.db import all_tags
 
@@ -10,6 +10,24 @@ def get_tag_by_id(tag_id):
     if len(tag):
         return tag[0]
     return None
+
+
+def make_public_tag(tag):
+    new_tag = {}
+    for field in tag:
+        if field == 'id':
+            new_tag['uri'] = url_for('get_tag', tag_id=tag['id'], _external=True)
+        else:
+            new_tag[field] = tag[field]
+    return new_tag
+
+
+def url_for_all_tags(tags):
+    return list(map(make_public_tag, tags))
+
+
+def url_for_tag(tag):
+    return make_public_tag(tag)
 
 
 def get_all_tags():
