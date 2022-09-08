@@ -4,6 +4,7 @@ from flask_httpauth import HTTPBasicAuth
 from api.tag.services import get_tag_by_id, get_all_tags
 from api.tag.services import remove_tag, validate_and_add_tag
 from api.tag.services import validate_and_change_tag
+from api.tag.services import url_for_tag, url_for_all_tags
 
 from api.task.services import get_task_by_id, get_all_tasks
 from api.task.services import remove_task, validate_and_add_task
@@ -64,21 +65,22 @@ def get_task(task_id):
 @app.route('/todo/api/v1.0/tasks', methods=['POST'])
 @auth.login_required
 def add_task():
-    response = validate_and_add_task(
-        request.json['title'],
+    if not request.json:
+        abort(400)
+    task = validate_and_add_task(
+        request.json.get('title', None),
         request.json.get('description', None)
     )
-    if response['status'] == 0:
+    if not task:
         abort(404)
-    if response['status'] == 1:
-        abort(400)
-    result = response['value']
-    return jsonify(url_for_task(result))
+    return jsonify(url_for_task(task))
 
 
 @app.route('/todo/api/v1.0/tasks/<int:task_id>', methods=['PUT'])
 @auth.login_required
 def change_task(task_id):
+    if not request.json:
+        abort(400)
     response = validate_and_change_task(
         task_id,
         request.json.get('title', None),
@@ -96,10 +98,9 @@ def change_task(task_id):
 @app.route('/todo/api/v1.0/tasks/<int:task_id>', methods=['DELETE'])
 @auth.login_required
 def delete_task(task_id):
-    task = get_task_by_id(task_id)
-    if not task:
+    result = remove_task(task_id)
+    if result == False:
         abort(404)
-    remove_task(task)
     return jsonify({'result': True})
 
 
@@ -107,7 +108,7 @@ def delete_task(task_id):
 @auth.login_required
 def get_tags():
     tags = get_all_tags()
-    return jsonify({'all_tags': tags})
+    return jsonify({'all_tags': url_for_all_tags(tags)})
 
 
 @app.route('/todo/api/v1.0/tags/<int:tag_id>', methods=['GET'])
@@ -116,20 +117,27 @@ def get_tag(tag_id):
     tag = get_tag_by_id(tag_id)
     if not tag:
         abort(404)
-    return jsonify(tag)
+    return jsonify(url_for_tag(tag))
 
 @app.route('/todo/api/v1.0/tags', methods=['POST'])
 @auth.login_required
 def add_tag():
-    tag = validate_and_add_tag(request.json['title'], request.json['color'])
+    if not request.json:
+        abort(400)
+    tag = validate_and_add_tag(
+        request.json.get('title', None),
+        request.json.get('color', None)
+    )
     if not tag:
         abort(400)
-    return jsonify(tag)
+    return jsonify(url_for_tag(tag))
 
 
 @app.route('/todo/api/v1.0/tags/<int:tag_id>', methods=['PUT'])
 @auth.login_required
 def change_tag(tag_id):
+    if not request.json:
+        abort(400)
     response = validate_and_change_tag(
         tag_id,
         request.json.get('title', None),
@@ -139,14 +147,14 @@ def change_tag(tag_id):
         abort(404)
     if response['status'] == 1:
         abort(400)
-    return jsonify(response['value'])
+    result = response['value']
+    return jsonify(url_for_tag(result))
 
 
 @app.route('/todo/api/v1.0/tags/<int:tag_id>', methods=['DELETE'])
 @auth.login_required
 def delete_tag(tag_id):
-    tag = get_tag_by_id(tag_id)
-    if not tag:
+    result = remove_tag(tag_id)
+    if result == False:
         abort(404)
-    remove_tag(tag)
     return jsonify({'result': True})

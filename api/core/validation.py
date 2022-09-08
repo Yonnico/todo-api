@@ -1,5 +1,5 @@
 def is_str(val):
-    return isinstance(val, str) and len(val)
+    return isinstance(val, str)
 
 
 def is_int(val):

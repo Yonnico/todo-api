@@ -1,4 +1,4 @@
-from flask import url_for, request
+from flask import url_for
 
 from api.task.db import all_tasks
 
@@ -34,44 +34,54 @@ def get_all_tasks():
     return all_tasks
 
 
-def remove_task(task):
-    return all_tasks.remove(task)
+def remove_task(task_id):
+    task = get_task_by_id(task_id)
+    if task != None:
+        return all_tasks.remove(task)
+    return False
 
 
 def validate_and_add_task(title, description):
+    if not private_validate_task(title, description, True):
+        return None
+    return private_add_task(title, description)
+
+
+def private_validate_task(title, description, required):
+    if required or title != None:
+        if not validate_title(title):
+            return False
+    if description != None:
+        if not validate_description(description):
+            return False
+    return True
+
+
+def private_add_task(title, description):
     id = all_tasks[-1]['id'] + 1
     task = {
         'id': id,
+        'title': title,
+        'description': description,
         'done': False
     }
-    if not request.json:
-        return {'status': 1, 'value': "No request"}
-    if not validate_title(title):
-        return {'status': 1, 'value': title}
-    if description is not None and not validate_description(description):
-        return {'status': 1, 'value': description}
-    task['title'] = title
-    task['description'] = description
     all_tasks.append(task)
-    return {'status': 2, 'value': task}
+    return task
 
 
 def validate_and_change_task(task_id, title, description, done):
     task = get_task_by_id(task_id)
     if not task:
         return {'status': 0, 'value': None}
-    if not request.json:
-        return {'status': 1, 'value': "No request"}
-    if title is not None and not validate_title(title):
-        return {'status': 1, 'value': title}
-    if description is not None and not validate_description(description):
-        return {'status': 1, 'value': description}
-    if done is not None and not validate_done(done):
-        return {'status': 1, 'value': done}
-    if title is not None:
+    if not private_validate_task(title, description, False):
+        return {'status': 1, 'value': None}
+    if done != None:
+        if not validate_done(done):
+            return {'status': 1, 'value': 'done'}
+    if title != None:
         task['title'] = title
-    if description is not None:
+    if description != None:
         task['description'] = description
-    if done is not None:
+    if done != None:
         task['done'] = done
     return {'status': 2, 'value': task}
