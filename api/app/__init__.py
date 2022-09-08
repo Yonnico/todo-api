@@ -65,21 +65,22 @@ def get_task(task_id):
 @app.route('/todo/api/v1.0/tasks', methods=['POST'])
 @auth.login_required
 def add_task():
-    response = validate_and_add_task(
-        request.json['title'],
+    if not request.json:
+        abort(400)
+    task = validate_and_add_task(
+        request.json.get('title', None),
         request.json.get('description', None)
     )
-    if response['status'] == 0:
+    if not task:
         abort(404)
-    if response['status'] == 1:
-        abort(400)
-    result = response['value']
-    return jsonify(url_for_task(result))
+    return jsonify(url_for_task(task))
 
 
 @app.route('/todo/api/v1.0/tasks/<int:task_id>', methods=['PUT'])
 @auth.login_required
 def change_task(task_id):
+    if not request.json:
+        abort(400)
     response = validate_and_change_task(
         task_id,
         request.json.get('title', None),
@@ -121,7 +122,12 @@ def get_tag(tag_id):
 @app.route('/todo/api/v1.0/tags', methods=['POST'])
 @auth.login_required
 def add_tag():
-    tag = validate_and_add_tag(request.json['title'], request.json['color'])
+    if not request.json:
+        abort(400)
+    tag = validate_and_add_tag(
+        request.json.get('title', None),
+        request.json.get('color', None)
+    )
     if not tag:
         abort(400)
     return jsonify(url_for_tag(tag))
@@ -130,6 +136,8 @@ def add_tag():
 @app.route('/todo/api/v1.0/tags/<int:tag_id>', methods=['PUT'])
 @auth.login_required
 def change_tag(tag_id):
+    if not request.json:
+        abort(400)
     response = validate_and_change_tag(
         tag_id,
         request.json.get('title', None),
