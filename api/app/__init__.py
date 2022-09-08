@@ -97,10 +97,9 @@ def change_task(task_id):
 @app.route('/todo/api/v1.0/tasks/<int:task_id>', methods=['DELETE'])
 @auth.login_required
 def delete_task(task_id):
-    task = get_task_by_id(task_id)
-    if not task:
+    result = remove_task(task_id)
+    if result == False:
         abort(404)
-    remove_task(task)
     return jsonify({'result': True})
 
 
@@ -147,8 +146,7 @@ def change_tag(tag_id):
 @app.route('/todo/api/v1.0/tags/<int:tag_id>', methods=['DELETE'])
 @auth.login_required
 def delete_tag(tag_id):
-    tag = get_tag_by_id(tag_id)
-    if not tag:
+    result = remove_tag(tag_id)
+    if result == False:
         abort(404)
-    remove_tag(tag)
     return jsonify({'result': True})

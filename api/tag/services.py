@@ -34,9 +34,11 @@ def get_all_tags():
     return all_tags
 
 
-def remove_tag(tag):
-    return all_tags.remove(tag)
-
+def remove_tag(tag_id):
+    tag = get_tag_by_id(tag_id)
+    if tag != None:
+        return all_tags.remove(tag)
+    return False
 
 def validate_and_add_tag(title, color):
     if not private_validate_tag(title, color):

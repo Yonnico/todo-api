@@ -34,8 +34,11 @@ def get_all_tasks():
     return all_tasks
 
 
-def remove_task(task):
-    return all_tasks.remove(task)
+def remove_task(task_id):
+    task = get_task_by_id(task_id)
+    if task != None:
+        return all_tasks.remove(task)
+    return False
 
 
 def validate_and_add_task(title, description):
